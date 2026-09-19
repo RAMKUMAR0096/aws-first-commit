@@ -46,7 +46,7 @@ export default function Home() {
   // Trigger analysis handler
   const handleAnalyze = async (resumeText: string, jobDescription: string, file?: File | null) => {
     setIsLoading(true);
-    toast.info("Analyzing resume against job description via Gemini 1.5 Flash...");
+    toast.info("Analyzing resume against job description via Gemini AI...");
 
     try {
       let res;
@@ -87,8 +87,7 @@ export default function Home() {
       }
     } catch (error: any) {
       console.error("Analysis Error:", error);
-      toast.error("Analysis error. Displaying high-fidelity demo analysis.");
-      setAnalysis(MOCK_ANALYSIS_RESULT);
+      toast.error(`Analysis failed: ${error.message || "Unable to complete AI analysis."}`);
     } finally {
       setIsLoading(false);
     }

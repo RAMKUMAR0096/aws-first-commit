@@ -1,7 +1,8 @@
+import "@/lib/polyfill";
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeResumeWithGemini } from "@/lib/gemini";
 import { extractTextFromDocument } from "@/lib/pdf-parser";
-import { MOCK_ANALYSIS_RESULT, MOCK_RESUME_TEXT, MOCK_JOB_DESCRIPTION } from "@/lib/mock-data";
+import { MOCK_ANALYSIS_RESULT } from "@/lib/mock-data";
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,34 +52,39 @@ export async function POST(req: NextRequest) {
     }
 
     if (!resumeText || resumeText.trim().length < 10) {
-      resumeText = MOCK_RESUME_TEXT;
+      return NextResponse.json(
+        {
+          success: false,
+          error: "No valid resume text found. Please upload a clear PDF resume or type your resume details.",
+        },
+        { status: 400 }
+      );
     }
+
     if (!jobDescription || jobDescription.trim().length < 10) {
-      jobDescription = MOCK_JOB_DESCRIPTION;
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Job Description is required. Please paste a valid job description to compare against.",
+        },
+        { status: 400 }
+      );
     }
 
     const analysis = await analyzeResumeWithGemini(resumeText, jobDescription);
 
-    const hasApiKey = Boolean(
-      process.env.GEMINI_API_KEY &&
-      process.env.GEMINI_API_KEY.trim() !== "" &&
-      process.env.GEMINI_API_KEY !== "your_gemini_api_key_here"
-    );
-
     return NextResponse.json({
       success: true,
       data: analysis,
-      isMock: !hasApiKey,
-      message: hasApiKey ? "Gemini AI analysis completed successfully." : "Analyzed using local AI engine fallback.",
+      isMock: false,
+      message: "Gemini AI analysis completed successfully.",
     });
   } catch (error: any) {
-    console.error("Analysis route error:", error);
+    console.error("❌ Analysis API route error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Failed to analyze resume and job description.",
-        data: MOCK_ANALYSIS_RESULT,
-        isMock: true,
+        error: error.message || "Failed to analyze resume with Gemini AI.",
       },
       { status: 500 }
     );
