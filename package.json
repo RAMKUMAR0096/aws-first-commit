@@ -9,13 +9,27 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1136.0",
+    "@aws-sdk/client-s3": "^3.1136.0",
+    "@aws-sdk/lib-dynamodb": "^3.1136.0",
+    "@google/genai": "^2.23.0",
+    "canvas-confetti": "^1.9.4",
+    "clsx": "^2.1.1",
+    "framer-motion": "^13.4.0",
+    "lucide-react": "^1.47.0",
     "next": "16.3.5",
+    "pdf-parse": "^2.4.5",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "recharts": "^3.10.1",
+    "sonner": "^2.0.8",
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
