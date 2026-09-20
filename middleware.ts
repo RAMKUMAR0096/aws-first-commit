@@ -1,5 +1,12 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
+if (!process.env.CLERK_SECRET_KEY) {
+  process.env.CLERK_SECRET_KEY = "sk_test_mPkh9FJkAhTBuCMFisNFymJ1vYxxjquPABsFzINFuY";
+}
+if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_test_aWRlYWwtbGFiLTk3MTguY2xlcmsuYWNjb3VudHMuZGV2JA";
+}
+
 const isProtectedRoute = createRouteMatcher([
   "/api/applications(.*)",
 ]);
