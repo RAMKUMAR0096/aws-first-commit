@@ -10,27 +10,41 @@ import {
 import { JobApplication } from "./mock-data";
 
 const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || "CareerCopilotTracker";
-const AWS_REGION = process.env.AWS_REGION || "us-east-1";
+
+function getAwsRegion(): string {
+  return process.env.MY_AWS_REGION || process.env.APP_AWS_REGION || process.env.AWS_REGION || "us-east-1";
+}
+
+function getAwsCredentials(): { accessKeyId: string; secretAccessKey: string } | null {
+  const accessKeyId =
+    process.env.MY_AWS_ACCESS_KEY_ID ||
+    process.env.APP_AWS_ACCESS_KEY_ID ||
+    process.env.AWS_ACCESS_KEY_ID;
+
+  const secretAccessKey =
+    process.env.MY_AWS_SECRET_ACCESS_KEY ||
+    process.env.APP_AWS_SECRET_ACCESS_KEY ||
+    process.env.AWS_SECRET_ACCESS_KEY;
+
+  if (!accessKeyId || !secretAccessKey || accessKeyId.trim() === "" || accessKeyId.includes("your_aws")) {
+    return null;
+  }
+
+  return { accessKeyId: accessKeyId.trim(), secretAccessKey: secretAccessKey.trim() };
+}
 
 // In-memory store fallback ONLY when AWS credentials are NOT provided in environment
 let inMemoryStore: JobApplication[] = [];
 let isTableInitialized = false;
 
 function getDynamoDocumentClient(): DynamoDBDocumentClient | null {
-  const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-
-  if (!accessKeyId || !secretAccessKey || accessKeyId.trim() === "" || accessKeyId.includes("your_aws")) {
-    return null;
-  }
+  const credentials = getAwsCredentials();
+  if (!credentials) return null;
 
   try {
     const client = new DynamoDBClient({
-      region: AWS_REGION,
-      credentials: {
-        accessKeyId,
-        secretAccessKey,
-      },
+      region: getAwsRegion(),
+      credentials,
     });
     return DynamoDBDocumentClient.from(client);
   } catch (err) {
@@ -45,12 +59,12 @@ function getDynamoDocumentClient(): DynamoDBDocumentClient | null {
 async function ensureTableExists(docClient: DynamoDBDocumentClient): Promise<void> {
   if (isTableInitialized) return;
 
-  const accessKeyId = process.env.AWS_ACCESS_KEY_ID!;
-  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY!;
+  const credentials = getAwsCredentials();
+  if (!credentials) return;
 
   const rawClient = new DynamoDBClient({
-    region: AWS_REGION,
-    credentials: { accessKeyId, secretAccessKey },
+    region: getAwsRegion(),
+    credentials,
   });
 
   try {

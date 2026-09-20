@@ -63,10 +63,10 @@ Configure your environment variables in `.env.local`:
 # Google Gemini API Key
 GEMINI_API_KEY=your_gemini_api_key_here
 
-# AWS Credentials & DynamoDB Configuration
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=your_aws_access_key_id_here
-AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key_here
+# AWS Credentials & DynamoDB Configuration (Use MY_AWS_ prefix to avoid AWS Amplify reserved prefix errors)
+MY_AWS_REGION=us-east-1
+MY_AWS_ACCESS_KEY_ID=your_aws_access_key_id_here
+MY_AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key_here
 DYNAMODB_TABLE_NAME=CareerCopilotTracker
 
 # Clerk Auth Configuration
@@ -78,9 +78,9 @@ NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
 NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
 ```
 
-> **Automatic Clerk & AWS Setup**:
-> - Running `npx clerk@latest init` automatically configures development Clerk keys.
-> - The application automatically provisions the `CareerCopilotTracker` table on AWS DynamoDB if it doesn't exist.
+> **Important Note for AWS Amplify Hosting**:
+> - AWS Amplify prohibits user-defined environment variables starting with `AWS_` because `AWS_` is a reserved system prefix in Amplify.
+> - Use `MY_AWS_ACCESS_KEY_ID`, `MY_AWS_SECRET_ACCESS_KEY`, and `MY_AWS_REGION` in the AWS Amplify Environment Variables console.
 
 ### 3. Run Development Server
 ```bash
@@ -104,16 +104,23 @@ npm run db:view
 
 When connecting your live AWS account:
 - **Table Name**: `CareerCopilotTracker` (or customized via `DYNAMODB_TABLE_NAME`)
-- **Region**: `us-east-1` (or customized via `AWS_REGION`)
+- **Region**: `us-east-1` (or customized via `MY_AWS_REGION`)
 - **Partition Key (HASH)**: `id` (String)
 - **Billing Mode**: On-Demand (`PAY_PER_REQUEST`)
 - **Security**: Server-side filtering by `userId` guarantees user isolation.
 
 ---
 
-## ☁️ Deployment
+## ☁️ Deployment to AWS Amplify
 
 1. Push this repository to GitHub.
-2. Log in to the [AWS Amplify Console](https://console.aws.amazon.com/amplify/) or Vercel.
-3. Import your repository and configure your environment variables (`GEMINI_API_KEY`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`).
-4. Click **Deploy**. Next.js App Router will build and deploy automatically!
+2. Log in to the [AWS Amplify Console](https://console.aws.amazon.com/amplify/).
+3. Import your repository and add the following Environment Variables in Amplify:
+   - `MY_AWS_REGION` = `us-east-1`
+   - `MY_AWS_ACCESS_KEY_ID` = `your_aws_access_key_id`
+   - `MY_AWS_SECRET_ACCESS_KEY` = `your_aws_secret_access_key`
+   - `DYNAMODB_TABLE_NAME` = `CareerCopilotTracker`
+   - `GEMINI_API_KEY` = `your_gemini_api_key`
+   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` = `pk_test_...`
+   - `CLERK_SECRET_KEY` = `sk_test_...`
+4. Click **Save and Deploy**. Next.js App Router will build and deploy successfully without environment variable errors!
