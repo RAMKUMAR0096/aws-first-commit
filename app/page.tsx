@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
 import { ScoreGauge } from "@/components/ScoreGauge";
@@ -89,11 +88,14 @@ export default function Home() {
         });
 
         if (json.data.matchScore >= 75) {
-          confetti({
-            particleCount: 60,
-            spread: 60,
-            origin: { y: 0.3 },
-          });
+          try {
+            const confetti = (await import("canvas-confetti")).default;
+            confetti({
+              particleCount: 60,
+              spread: 60,
+              origin: { y: 0.3 },
+            });
+          } catch {}
         }
       } else {
         throw new Error(json.error || "Analysis failed");
@@ -163,7 +165,10 @@ export default function Home() {
       if (json.success) {
         toast.success(`Updated status to ${newStatus}`);
         if (newStatus === "OFFER" || newStatus === "INTERVIEW") {
-          confetti({ particleCount: 50, spread: 50 });
+          try {
+            const confetti = (await import("canvas-confetti")).default;
+            confetti({ particleCount: 50, spread: 50 });
+          } catch {}
         }
       } else {
         toast.error(json.error || "Failed to update status");

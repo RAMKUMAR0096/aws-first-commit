@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import confetti from "canvas-confetti";
 import { Sparkles, Cpu, Database, Award, ArrowUpRight } from "lucide-react";
 import {
   SignInButton,
@@ -16,13 +15,16 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onLoadMockData, isMockMode = false }) => {
-  const triggerConfetti = () => {
-    confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.2 },
-      colors: ["#6366f1", "#10b981", "#3b82f6", "#ec4899"],
-    });
+  const triggerConfetti = async () => {
+    try {
+      const confetti = (await import("canvas-confetti")).default;
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.2 },
+        colors: ["#6366f1", "#10b981", "#3b82f6", "#ec4899"],
+      });
+    } catch {}
     onLoadMockData();
   };
 
