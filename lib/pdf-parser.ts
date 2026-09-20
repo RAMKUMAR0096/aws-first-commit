@@ -10,32 +10,8 @@ export async function extractTextFromDocument(fileBuffer: Buffer, mimeType?: str
 
   try {
     if (mimeType === "application/pdf" || isPdfBuffer(fileBuffer)) {
-      // Strategy 1: Attempt pdf-parse library if available without worker errors
-      try {
-        const pdfModule = require("pdf-parse");
-        const uint8 = new Uint8Array(fileBuffer);
-
-        if (pdfModule && typeof pdfModule.PDFParse === "function") {
-          const parser = new pdfModule.PDFParse(uint8);
-          const data = await parser.getText();
-          if (data && typeof data.text === "string" && data.text.trim().length >= 10) {
-            extractedText = data.text;
-          }
-        } else if (typeof pdfModule === "function") {
-          const data = await pdfModule(fileBuffer);
-          if (data && typeof data.text === "string" && data.text.trim().length >= 10) {
-            extractedText = data.text;
-          }
-        }
-      } catch (pdfErr) {
-        console.warn("⚠️ pdf-parse library worker error (swallowing fallback):", pdfErr instanceof Error ? pdfErr.message : pdfErr);
-      }
-
-      // Strategy 2: Native PDF stream extractor (handles FlateDecode compressed & uncompressed streams)
-      if (!extractedText || extractedText.trim().length < 10) {
-        console.log("🔄 Running native zero-dependency PDF stream extractor...");
-        extractedText = extractTextFromPdfStreams(fileBuffer);
-      }
+      console.log("🔄 Running native zero-dependency PDF stream extractor...");
+      extractedText = extractTextFromPdfStreams(fileBuffer);
 
       // Normalize and clean extracted text
       const cleanedText = cleanPdfText(extractedText);

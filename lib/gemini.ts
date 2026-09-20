@@ -163,7 +163,7 @@ ${jobDescriptionText}
     ],
   };
 
-  const CANDIDATE_MODELS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest"];
+  const CANDIDATE_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
   let lastError: any = null;
 
   for (const modelName of CANDIDATE_MODELS) {
