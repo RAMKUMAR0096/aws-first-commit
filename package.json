@@ -14,6 +14,8 @@
     "@aws-sdk/client-s3": "^3.1136.0",
     "@aws-sdk/lib-dynamodb": "^3.1136.0",
     "@clerk/nextjs": "^7.9.4",
+    "@emnapi/core": "^1.11.3",
+    "@emnapi/runtime": "^1.11.3",
     "@google/genai": "^2.23.0",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
