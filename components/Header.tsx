@@ -3,6 +3,12 @@
 import React from "react";
 import confetti from "canvas-confetti";
 import { Sparkles, Cpu, Database, Award, ArrowUpRight } from "lucide-react";
+import {
+  SignInButton,
+  SignUpButton,
+  UserButton,
+  Show,
+} from "@clerk/nextjs";
 
 interface HeaderProps {
   onLoadMockData: () => void;
@@ -45,7 +51,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoadMockData, isMockMode = fal
           </div>
         </div>
 
-        {/* Right Status Badges & Demo Mode Action */}
+        {/* Right Status Badges & Demo Mode Action & Auth */}
         <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
           {/* Hackathon Badge */}
           <span className="hidden items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-xs font-medium text-slate-300 md:inline-flex">
@@ -78,8 +84,35 @@ export const Header: React.FC<HeaderProps> = ({ onLoadMockData, isMockMode = fal
             <span>Load Demo Data</span>
             <ArrowUpRight className="h-3 w-3 opacity-70 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </button>
+
+          {/* Clerk Auth Buttons */}
+          <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+            <Show when="signed-out">
+              <SignInButton mode="modal">
+                <button className="rounded-lg border border-indigo-500/40 bg-indigo-500/10 px-3 py-1.5 text-xs font-semibold text-indigo-300 transition-all hover:bg-indigo-500/20 hover:text-white cursor-pointer">
+                  Sign In
+                </button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button className="rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-600/30 transition-all hover:bg-indigo-500 cursor-pointer">
+                  Sign Up
+                </button>
+              </SignUpButton>
+            </Show>
+
+            <Show when="signed-in">
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "w-8 h-8 rounded-lg ring-2 ring-indigo-500/40",
+                  },
+                }}
+              />
+            </Show>
+          </div>
         </div>
       </div>
     </header>
   );
 };
+

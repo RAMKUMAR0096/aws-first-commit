@@ -47,6 +47,7 @@ export interface AnalysisResult {
 
 export interface JobApplication {
   id: string;
+  userId?: string;
   companyName: string;
   roleTitle: string;
   location: string;

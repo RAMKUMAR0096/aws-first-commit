@@ -11,37 +11,50 @@ import { InterviewPrep } from "@/components/InterviewPrep";
 import { ApplicationTracker } from "@/components/ApplicationTracker";
 import {
   MOCK_ANALYSIS_RESULT,
-  MOCK_RESUME_TEXT,
-  MOCK_JOB_DESCRIPTION,
-  INITIAL_MOCK_APPLICATIONS,
   AnalysisResult,
   JobApplication,
 } from "@/lib/mock-data";
-import { Target, Map, MessageSquareCode, Database, Sparkles, ExternalLink, Code2 } from "lucide-react";
+import { Target, Map, MessageSquareCode, Database, Code2 } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 
 export default function Home() {
-  const [analysis, setAnalysis] = useState<AnalysisResult>(MOCK_ANALYSIS_RESULT);
-  const [applications, setApplications] = useState<JobApplication[]>(INITIAL_MOCK_APPLICATIONS);
+  const { isSignedIn } = useAuth();
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [applications, setApplications] = useState<JobApplication[]>([]);
   const [activeTab, setActiveTab] = useState<"analyzer" | "roadmap" | "interview" | "tracker">("analyzer");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isMockMode, setIsMockMode] = useState<boolean>(true);
+  const [isLoadingApps, setIsLoadingApps] = useState<boolean>(false);
+  const [isMockMode, setIsMockMode] = useState<boolean>(false);
 
-  // Fetch initial applications on load
+  // Fetch authenticated user's applications whenever auth status changes
   useEffect(() => {
     async function loadApps() {
+      if (!isSignedIn) {
+        setApplications([]);
+        return;
+      }
+
+      setIsLoadingApps(true);
       try {
         const res = await fetch("/api/applications");
+        if (res.status === 401) {
+          setApplications([]);
+          return;
+        }
         const json = await res.json();
         if (json.success && json.data) {
           setApplications(json.data);
           setIsMockMode(json.isMock);
         }
       } catch (err) {
-        console.warn("Using in-memory initial applications store.");
+        console.warn("Unable to load user applications.");
+      } finally {
+        setIsLoadingApps(false);
       }
     }
+
     loadApps();
-  }, []);
+  }, [isSignedIn]);
 
   // Trigger analysis handler
   const handleAnalyze = async (resumeText: string, jobDescription: string, file?: File | null) => {
@@ -93,13 +106,11 @@ export default function Home() {
     }
   };
 
-  // Instant Mock Data Loader for Hackathon Judges
+  // Instant Mock Data Loader for Candidate Resume/JD Analysis
   const handleLoadMockData = () => {
     setAnalysis(MOCK_ANALYSIS_RESULT);
-    setApplications(INITIAL_MOCK_APPLICATIONS);
-    setIsMockMode(true);
-    toast.success("🚀 Loaded Full Demo Candidate Profile!", {
-      description: "Aarav Sharma (B.Tech Final Year) vs Cloud Engineering Role",
+    toast.success("🚀 Loaded Sample Candidate Profile!", {
+      description: "Sample Resume & Job Description loaded for testing.",
     });
   };
 
@@ -111,11 +122,19 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newApp),
       });
+
+      if (res.status === 401) {
+        toast.error("Please sign in to log job applications.");
+        return;
+      }
+
       const json = await res.json();
 
       if (json.success && json.data) {
         setApplications((prev) => [json.data, ...prev]);
         toast.success(json.message || "Application saved successfully!");
+      } else {
+        toast.error(json.error || "Error saving application.");
       }
     } catch (err) {
       toast.error("Error saving application.");
@@ -133,6 +152,12 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status: newStatus }),
       });
+
+      if (res.status === 401) {
+        toast.error("Please sign in to update application status.");
+        return;
+      }
+
       const json = await res.json();
 
       if (json.success) {
@@ -140,6 +165,8 @@ export default function Home() {
         if (newStatus === "OFFER" || newStatus === "INTERVIEW") {
           confetti({ particleCount: 50, spread: 50 });
         }
+      } else {
+        toast.error(json.error || "Failed to update status");
       }
     } catch (err) {
       toast.error("Failed to update status");
@@ -149,8 +176,19 @@ export default function Home() {
   const handleDeleteApplication = async (id: string) => {
     try {
       setApplications((prev) => prev.filter((app) => app.id !== id));
-      await fetch(`/api/applications?id=${id}`, { method: "DELETE" });
-      toast.info("Application deleted");
+      const res = await fetch(`/api/applications?id=${id}`, { method: "DELETE" });
+
+      if (res.status === 401) {
+        toast.error("Please sign in to delete applications.");
+        return;
+      }
+
+      const json = await res.json();
+      if (json.success) {
+        toast.info("Application deleted");
+      } else {
+        toast.error(json.error || "Failed to delete application");
+      }
     } catch (err) {
       toast.error("Failed to delete application");
     }
@@ -163,21 +201,23 @@ export default function Home() {
 
       {/* Main Content Hub */}
       <main className="mx-auto flex-1 w-full max-w-7xl px-4 py-6 sm:px-6 space-y-6">
-        {/* Match Score Radial Banner */}
-        <ScoreGauge
-          score={analysis.matchScore}
-          matchedCount={analysis.matchedSkills.length}
-          partialCount={analysis.partialSkills.length}
-          missingCount={analysis.missingSkills.length}
-          summary={analysis.summary}
-        />
+        {/* Match Score Radial Banner (Visible only after analysis is submitted) */}
+        {analysis && (
+          <ScoreGauge
+            score={analysis.matchScore}
+            matchedCount={analysis.matchedSkills.length}
+            partialCount={analysis.partialSkills.length}
+            missingCount={analysis.missingSkills.length}
+            summary={analysis.summary}
+          />
+        )}
 
         {/* Tab Navigation Menu */}
         <div className="flex overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/80 p-1.5 backdrop-blur-xl">
           <button
             type="button"
             onClick={() => setActiveTab("analyzer")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all sm:text-sm whitespace-nowrap ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all sm:text-sm whitespace-nowrap cursor-pointer ${
               activeTab === "analyzer"
                 ? "bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/25"
                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
@@ -190,7 +230,7 @@ export default function Home() {
           <button
             type="button"
             onClick={() => setActiveTab("roadmap")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all sm:text-sm whitespace-nowrap ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all sm:text-sm whitespace-nowrap cursor-pointer ${
               activeTab === "roadmap"
                 ? "bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/25"
                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
@@ -198,15 +238,17 @@ export default function Home() {
           >
             <Map className="h-4 w-4 text-indigo-400" />
             <span>2. Actionable Roadmap</span>
-            <span className="rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 text-[10px]">
-              {analysis.missingSkills.length} Missing
-            </span>
+            {analysis && (
+              <span className="rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 text-[10px]">
+                {analysis.missingSkills.length} Missing
+              </span>
+            )}
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("interview")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all sm:text-sm whitespace-nowrap ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all sm:text-sm whitespace-nowrap cursor-pointer ${
               activeTab === "interview"
                 ? "bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/25"
                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
@@ -219,7 +261,7 @@ export default function Home() {
           <button
             type="button"
             onClick={() => setActiveTab("tracker")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all sm:text-sm whitespace-nowrap ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all sm:text-sm whitespace-nowrap cursor-pointer ${
               activeTab === "tracker"
                 ? "bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/25"
                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
@@ -245,11 +287,45 @@ export default function Home() {
           )}
 
           {activeTab === "roadmap" && (
-            <LearningRoadmap roadmap={analysis.learningRoadmap} />
+            analysis ? (
+              <LearningRoadmap roadmap={analysis.learningRoadmap} />
+            ) : (
+              <div className="glass-panel flex flex-col items-center justify-center rounded-2xl p-12 text-center border border-slate-800 shadow-xl space-y-3">
+                <Target className="h-10 w-10 text-indigo-400 opacity-60 mb-1" />
+                <h3 className="text-lg font-bold text-white">No Learning Roadmap Yet</h3>
+                <p className="text-xs text-slate-400 max-w-md">
+                  Please upload your resume and target job description in the <strong>Fit Analyzer & Matrix</strong> tab to generate your custom learning roadmap.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("analyzer")}
+                  className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500 cursor-pointer"
+                >
+                  Go to Fit Analyzer
+                </button>
+              </div>
+            )
           )}
 
           {activeTab === "interview" && (
-            <InterviewPrep questions={analysis.interviewQuestions} />
+            analysis ? (
+              <InterviewPrep questions={analysis.interviewQuestions} />
+            ) : (
+              <div className="glass-panel flex flex-col items-center justify-center rounded-2xl p-12 text-center border border-slate-800 shadow-xl space-y-3">
+                <MessageSquareCode className="h-10 w-10 text-amber-400 opacity-60 mb-1" />
+                <h3 className="text-lg font-bold text-white">No Interview Questions Yet</h3>
+                <p className="text-xs text-slate-400 max-w-md">
+                  Please upload your resume and target job description in the <strong>Fit Analyzer & Matrix</strong> tab to generate tailored interview preparation questions.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("analyzer")}
+                  className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500 cursor-pointer"
+                >
+                  Go to Fit Analyzer
+                </button>
+              </div>
+            )
           )}
 
           {activeTab === "tracker" && (
@@ -258,8 +334,7 @@ export default function Home() {
               onAddApplication={handleAddApplication}
               onUpdateStatus={handleUpdateStatus}
               onDeleteApplication={handleDeleteApplication}
-              onResetMock={handleLoadMockData}
-              isLoading={isLoading}
+              isLoading={isLoadingApps}
               isMockMode={isMockMode}
             />
           )}
@@ -274,7 +349,7 @@ export default function Home() {
             <span>Built for <strong>Bharat Builds Hackathon 2026</strong></span>
           </div>
           <div className="flex items-center gap-4 text-slate-400">
-            <span>Next.js 15 &bull; Tailwind CSS v4 &bull; Gemini 1.5 Flash &bull; AWS DynamoDB</span>
+            <span>Next.js 15 &bull; Clerk Auth &bull; Gemini 1.5 Flash &bull; AWS DynamoDB</span>
           </div>
         </div>
       </footer>

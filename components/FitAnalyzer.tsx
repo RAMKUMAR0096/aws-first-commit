@@ -33,10 +33,14 @@ export const FitAnalyzer: React.FC<FitAnalyzerProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<"file" | "text">("file");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [resumeText, setResumeText] = useState(MOCK_RESUME_TEXT);
-  const [jobDescription, setJobDescription] = useState(MOCK_JOB_DESCRIPTION);
+  const [resumeText, setResumeText] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const hasResume = Boolean(selectedFile || resumeText.trim().length > 0);
+  const hasJobDescription = Boolean(jobDescription.trim().length > 0);
+  const isSubmitDisabled = isLoading || !hasResume || !hasJobDescription;
 
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -60,14 +64,21 @@ export const FitAnalyzer: React.FC<FitAnalyzerProps> = ({
     }
   };
 
+  const handleFillSample = () => {
+    setResumeText(MOCK_RESUME_TEXT);
+    setJobDescription(MOCK_JOB_DESCRIPTION);
+    setActiveTab("text");
+    onLoadSampleData();
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (activeTab === "file" && !selectedFile && !resumeText) {
-      toast.error("Please upload your resume file or switch to raw text mode.");
+    if (!hasResume) {
+      toast.error("Please upload your resume file or paste your resume text.");
       return;
     }
-    if (!jobDescription || jobDescription.trim().length < 10) {
-      toast.error("Please paste a valid Job Description.");
+    if (!hasJobDescription) {
+      toast.error("Please paste the target Job Description.");
       return;
     }
 
@@ -105,7 +116,7 @@ export const FitAnalyzer: React.FC<FitAnalyzerProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveTab("file")}
-                  className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${
+                  className={`rounded-md px-3 py-1 text-xs font-medium transition-all cursor-pointer ${
                     activeTab === "file"
                       ? "bg-indigo-600 text-white shadow-sm"
                       : "text-slate-400 hover:text-white"
@@ -116,7 +127,7 @@ export const FitAnalyzer: React.FC<FitAnalyzerProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveTab("text")}
-                  className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${
+                  className={`rounded-md px-3 py-1 text-xs font-medium transition-all cursor-pointer ${
                     activeTab === "text"
                       ? "bg-indigo-600 text-white shadow-sm"
                       : "text-slate-400 hover:text-white"
@@ -167,7 +178,7 @@ export const FitAnalyzer: React.FC<FitAnalyzerProps> = ({
                           e.stopPropagation();
                           setSelectedFile(null);
                         }}
-                        className="mt-1 text-xs text-rose-400 underline hover:text-rose-300"
+                        className="mt-1 text-xs text-rose-400 underline hover:text-rose-300 cursor-pointer"
                       >
                         Remove file
                       </button>
@@ -199,14 +210,14 @@ export const FitAnalyzer: React.FC<FitAnalyzerProps> = ({
 
           <div className="mt-4 flex items-center justify-between">
             <span className="text-[11px] text-slate-400">
-              💡 Zero-hallucination parsing strictly reads supplied resume.
+              💡 Upload PDF or paste text to enable analysis.
             </span>
             <button
               type="button"
-              onClick={onLoadSampleData}
-              className="text-xs font-medium text-indigo-400 hover:text-indigo-300 underline"
+              onClick={handleFillSample}
+              className="text-xs font-medium text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
             >
-              Use Sample Student Resume
+              Use Sample Resume & JD
             </button>
           </div>
         </div>
@@ -236,13 +247,28 @@ export const FitAnalyzer: React.FC<FitAnalyzerProps> = ({
 
           <div className="mt-4 flex items-center justify-between">
             <span className="text-[11px] text-slate-400">
-              Supports Cloud, Software, and Data roles.
+              {!hasResume && !hasJobDescription
+                ? "⚠️ Add both Resume and Job Description to analyze."
+                : !hasResume
+                ? "⚠️ Resume required."
+                : !hasJobDescription
+                ? "⚠️ Job Description required."
+                : "✅ Ready for AI Gap Analysis."}
             </span>
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={isLoading}
-              className="group relative inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.02] hover:shadow-indigo-500/40 active:scale-95 disabled:opacity-50"
+              disabled={isSubmitDisabled}
+              title={
+                isSubmitDisabled
+                  ? "Please provide both Resume and Job Description to enable submit"
+                  : "Run AI Gap Analysis"
+              }
+              className={`group relative inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all ${
+                isSubmitDisabled
+                  ? "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60 shadow-none"
+                  : "bg-gradient-to-r from-indigo-600 via-indigo-500 to-emerald-500 shadow-indigo-500/25 hover:scale-[1.02] hover:shadow-indigo-500/40 active:scale-95 cursor-pointer"
+              }`}
             >
               {isLoading ? (
                 <>
@@ -251,7 +277,7 @@ export const FitAnalyzer: React.FC<FitAnalyzerProps> = ({
                 </>
               ) : (
                 <>
-                  <Zap className="h-4 w-4 text-emerald-300" />
+                  <Zap className={`h-4 w-4 ${isSubmitDisabled ? "text-slate-500" : "text-emerald-300"}`} />
                   <span>Analyze Gap Matrix</span>
                   <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </>
