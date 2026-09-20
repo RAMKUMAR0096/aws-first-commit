@@ -1,4 +1,4 @@
-// DOMMatrix and Location polyfills for pdfjs-dist in Node.js / Next.js Server Components
+// DOMMatrix polyfill for pdfjs-dist / PDF parsing in Node.js / Next.js Server Components
 
 class DOMMatrixPolyfill {
   a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
@@ -30,50 +30,12 @@ class DOMMatrixPolyfill {
 
 const g: any = typeof globalThis !== "undefined" ? globalThis : typeof global !== "undefined" ? global : {};
 
-// Safe location object to prevent destructuring errors
-const safeLocation = {
-  protocol: "http:",
-  host: "localhost:3000",
-  hostname: "localhost",
-  port: "3000",
-  href: "http://localhost:3000/",
-  origin: "http://localhost:3000",
-  pathname: "/",
-  search: "",
-  hash: "",
-  assign() { },
-  replace() { },
-  reload() { },
-  toString() { return "http://localhost:3000/"; }
-};
-
-// 1. Polyfill DOMMatrix globally
+// Polyfill DOMMatrix globally for PDF parsing libraries without touching window/location
 if (typeof g.DOMMatrix === "undefined") {
   g.DOMMatrix = DOMMatrixPolyfill;
 }
 if (typeof global !== "undefined" && !(global as any).DOMMatrix) {
   (global as any).DOMMatrix = DOMMatrixPolyfill;
-}
-
-// 2. Mock window and window.location completely for Node SSR / Server Components
-if (typeof g.window === "undefined") {
-  g.window = g;
-}
-
-if (typeof g.window.location === "undefined") {
-  try {
-    Object.defineProperty(g.window, "location", {
-      value: safeLocation,
-      writable: true,
-      configurable: true,
-    });
-  } catch {
-    g.window.location = safeLocation;
-  }
-}
-
-if (typeof g.location === "undefined") {
-  g.location = safeLocation;
 }
 
 export { DOMMatrixPolyfill };

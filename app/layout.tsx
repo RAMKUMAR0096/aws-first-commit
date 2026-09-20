@@ -15,10 +15,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const publishableKey =
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+    "pk_test_aWRlYWwtbGFiLTk3MTguY2xlcmsuYWNjb3VudHMuZGV2JA";
+
   return (
     <html lang="en" className="dark scroll-smooth">
       <body className="bg-[#080c14] text-slate-100 antialiased selection:bg-indigo-500/30 selection:text-indigo-200 min-h-screen flex flex-col">
-        <ClerkProvider>
+        <ClerkProvider publishableKey={publishableKey}>
           {children}
           <Toaster
             position="bottom-right"
