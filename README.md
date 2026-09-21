@@ -1,11 +1,11 @@
-# AI Career Copilot for Students 🚀
+# AI Career Copilot for Students 
 > **Bharat Builds Hackathon 2026 Submission** | Next.js 16, Clerk Auth, Google Gemini 1.5 Flash & AWS DynamoDB
 
 **AI Career Copilot for Students** is a production-ready, zero-hallucination web application designed to help final-year computer science and engineering students audit their skill gaps against real-world job descriptions, get a 7/14/30-day actionable study roadmap, practice resume-grounded interview questions, and track job applications in live AWS DynamoDB with strict per-user authentication.
 
 ---
 
-## 🌟 Key Features
+##  Key Features
 
 ### 1. User Authentication & Multi-Tenant Data Isolation (Clerk)
 - **Secure Authentication**: Built with `@clerk/nextjs` Core 3 (`<Show>` conditional control, modal sign-in & sign-up).
@@ -32,7 +32,7 @@
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 - **Framework**: Next.js 16 (App Router, Turbopack), TypeScript, React 19
 - **Authentication**: `@clerk/nextjs` (Clerk Core 3)
@@ -43,7 +43,7 @@
 
 ---
 
-## ⚡ Quick Start (Local Setup)
+##  Quick Start (Local Setup)
 
 ### 1. Clone & Install Dependencies
 ```bash
@@ -90,7 +90,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🔍 Inspect Live AWS DynamoDB Data via CLI
+##  Inspect Live AWS DynamoDB Data via CLI
 
 You can inspect all job applications stored in your live AWS DynamoDB table at any time directly from your terminal:
 
@@ -100,7 +100,7 @@ npm run db:view
 
 ---
 
-## 🛡️ AWS DynamoDB Table Specification
+##  AWS DynamoDB Table Specification
 
 When connecting your live AWS account:
 - **Table Name**: `CareerCopilotTracker` (or customized via `DYNAMODB_TABLE_NAME`)
@@ -111,7 +111,7 @@ When connecting your live AWS account:
 
 ---
 
-## ☁️ Deployment to AWS Amplify
+##  Deployment to AWS Amplify
 
 1. Push this repository to GitHub.
 2. Log in to the [AWS Amplify Console](https://console.aws.amazon.com/amplify/).
